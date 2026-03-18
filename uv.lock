@@ -3,10 +3,40 @@ revision = 3
 requires-python = ">=3.13"
 
 [[package]]
+name = "airfield"
+version = "0.1.0"
+source = { editable = "../AirField" }
+dependencies = [
+    { name = "pydantic" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pydantic" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "coverage" },
+    { name = "pytest" },
+    { name = "ruff" },
+    { name = "ty" },
+]
+docs = [
+    { name = "mkdocstrings-python" },
+    { name = "zensical" },
+]
+lint = [{ name = "ruff" }]
+test = [
+    { name = "coverage" },
+    { name = "pytest" },
+]
+typecheck = [{ name = "ty" }]
+
+[[package]]
 name = "airmodel"
 version = "0.1.1"
 source = { editable = "." }
 dependencies = [
+    { name = "airfield" },
     { name = "asyncpg" },
     { name = "pydantic" },
     { name = "rich" },
@@ -39,6 +69,7 @@ typecheck = [
 
 [package.metadata]
 requires-dist = [
+    { name = "airfield", editable = "../AirField" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "rich" },

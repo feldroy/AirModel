@@ -27,6 +27,7 @@ license = {text = "MIT"}
 dependencies = [
     "pydantic>=2.0",
     "asyncpg>=0.30.0",
+    "AirField",
     "typer",
     "rich",
 ]
@@ -104,3 +105,6 @@ exclude_also = [
 [tool.uv]
 package = true
 default-groups = ["dev"]
+
+[tool.uv.sources]
+AirField = { path = "../AirField", editable = true }

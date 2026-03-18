@@ -6,13 +6,13 @@ against PostgreSQL.
 
 Example::
 
-    from airmodel import AirDB, AirModel, Field
+    from airmodel import AirDB, AirModel, AirField
 
     class UnicornSighting(AirModel):
-        id: int | None = Field(default=None, primary_key=True)
+        id: int | None = AirField(default=None, primary_key=True)
         location: str
         sparkle_rating: int
-        confirmed: bool = Field(default=False)
+        confirmed: bool = AirField(default=False)
 
     db = AirDB()
     app = air.Air(lifespan=db.lifespan("postgresql://..."))
@@ -37,12 +37,10 @@ from types import UnionType
 from typing import Any, Self, get_args, get_origin
 from uuid import UUID
 
+from airfield import AirField
 from pydantic import (
     BaseModel,
     ConfigDict,
-)
-from pydantic import (
-    Field as PydanticField,
 )
 from pydantic.fields import FieldInfo
 
@@ -72,38 +70,6 @@ def _pg_type(python_type: type) -> str:
         raise TypeError(msg)
     return _PY_TO_PG[python_type]
 
-
-# ---------------------------------------------------------------------------
-# Field helper
-# ---------------------------------------------------------------------------
-
-
-def Field(
-    default: Any = ...,
-    *,
-    primary_key: bool = False,
-    default_factory: Any = None,
-    **kwargs: Any,
-) -> Any:
-    """Thin wrapper around :func:`pydantic.Field` that accepts a ``primary_key`` flag.
-
-    The flag is stored in ``json_schema_extra`` so :class:`Table` can read it
-    when generating SQL.
-
-    Returns:
-        A Pydantic FieldInfo with optional ``primary_key`` metadata.
-    """
-    schema_extra: dict[str, Any] = kwargs.pop("json_schema_extra", None) or {}
-    if primary_key:
-        schema_extra["primary_key"] = True
-
-    pydantic_kwargs: dict[str, Any] = {**kwargs, "json_schema_extra": schema_extra}
-    if default is not ...:
-        pydantic_kwargs["default"] = default
-    if default_factory is not None:
-        pydantic_kwargs["default_factory"] = default_factory
-
-    return PydanticField(**pydantic_kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -251,7 +217,7 @@ class AirModel(BaseModel):
     """Base class for database-backed Pydantic models.
 
     Subclass this and declare fields using standard Pydantic annotations.
-    Use :func:`Field` with ``primary_key=True`` for auto-incrementing
+    Use :func:`AirField` with ``primary_key=True`` for auto-incrementing
     primary keys.
 
     The table name is derived from the class name (converted to snake_case). All query
@@ -260,7 +226,7 @@ class AirModel(BaseModel):
     Example::
 
         class User(AirModel):
-            id: int | None = Field(default=None, primary_key=True)
+            id: int | None = AirField(default=None, primary_key=True)
             name: str
             email: str
     """

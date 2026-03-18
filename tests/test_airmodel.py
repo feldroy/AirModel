@@ -11,7 +11,8 @@ from uuid import UUID
 
 import pytest
 
-from airmodel import AirDB, AirModel, Field, MultipleObjectsReturned
+from airfield import AirField
+from airmodel import AirDB, AirModel, MultipleObjectsReturned
 from airmodel.main import _PY_TO_PG, _pg_type, _table_registry
 
 # ---------------------------------------------------------------------------
@@ -20,16 +21,16 @@ from airmodel.main import _PY_TO_PG, _pg_type, _table_registry
 
 
 class DragonFruit(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.now)
+    id: int | None = AirField(default=None, primary_key=True)
+    created_at: datetime = AirField(default_factory=datetime.now)
     name: str
     color: str
-    sweetness: str = Field(default="")
-    origin: str = Field(default="")
+    sweetness: str = AirField(default="")
+    origin: str = AirField(default="")
 
 
 class StarFruit(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     title: str
     score: float
     active: bool
@@ -37,22 +38,22 @@ class StarFruit(AirModel):
 
 
 class UnicornSighting(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     location: str
 
 
 class UbePancake(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     weight: float
 
 
 class BokChoy(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     bunch_size: int
 
 
 class Cassava(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     variety: str
 
 
@@ -424,9 +425,9 @@ class TestNoPKModel:
 
 
 class OptionalModel(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     nickname: str | None = None
-    bio: str = Field(default="")
+    bio: str = AirField(default="")
 
 
 class TestOptionalFields:
@@ -459,7 +460,7 @@ class TestAirModelExport:
 
     def test_airmodel_has_instance_orm_methods(self) -> None:
         class Task(AirModel):
-            id: int | None = Field(default=None, primary_key=True)
+            id: int | None = AirField(default=None, primary_key=True)
             title: str
 
         task = Task(title="write tests")
@@ -470,7 +471,7 @@ class TestAirModelExport:
 
     def test_airmodel_generates_correct_sql(self) -> None:
         class Article(AirModel):
-            id: int | None = Field(default=None, primary_key=True)
+            id: int | None = AirField(default=None, primary_key=True)
             title: str
             body: str
             draft: bool
@@ -489,7 +490,7 @@ class TestAirModelExport:
 
 
 class MagicPotion(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     batch_id: UUID
     label: str
 
@@ -506,7 +507,7 @@ class TestUUIDField:
 
     def test_optional_uuid_no_not_null(self) -> None:
         class OptionalUUIDModel(AirModel):
-            id: int | None = Field(default=None, primary_key=True)
+            id: int | None = AirField(default=None, primary_key=True)
             trace_id: UUID | None = None
 
         cols = OptionalUUIDModel._column_defs()
@@ -880,10 +881,10 @@ class TestCRUDWithMockPool:
 class RainbowWaterfall(AirModel):
     """Test model with fields suited to lookup operator tests."""
 
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     location: str
     sparkle_rating: int
-    confirmed: bool = Field(default=False)
+    confirmed: bool = AirField(default=False)
 
 
 _WATERFALL_ROW: dict[str, object] = {
