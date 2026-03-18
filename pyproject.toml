@@ -27,7 +27,7 @@ license = {text = "MIT"}
 dependencies = [
     "pydantic>=2.0",
     "asyncpg>=0.30.0",
-    "AirField",
+    "AirField>=0.2.0",
     "typer",
     "rich",
 ]
