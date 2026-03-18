@@ -10,8 +10,8 @@ from datetime import datetime
 from uuid import UUID
 
 import pytest
-
 from airfield import AirField
+
 from airmodel import AirDB, AirModel, MultipleObjectsReturned
 from airmodel.main import _PY_TO_PG, _pg_type, _table_registry
 
@@ -122,16 +122,17 @@ class TestTypeMapping:
 
 
 class TestField:
-    def test_primary_key_stored_in_json_schema_extra(self) -> None:
+    def test_primary_key_stored_in_metadata(self) -> None:
         field_info = DragonFruit.model_fields["id"]
-        assert field_info.json_schema_extra is not None
-        assert field_info.json_schema_extra["primary_key"] is True
+        from airfield import PrimaryKey
 
-    def test_non_pk_field_has_no_primary_key_flag(self) -> None:
+        assert any(isinstance(m, PrimaryKey) for m in field_info.metadata)
+
+    def test_non_pk_field_has_no_primary_key_in_metadata(self) -> None:
         field_info = DragonFruit.model_fields["name"]
-        extra = field_info.json_schema_extra
-        if extra is not None:
-            assert extra.get("primary_key") is not True
+        from airfield import PrimaryKey
+
+        assert not any(isinstance(m, PrimaryKey) for m in field_info.metadata)
 
     def test_pk_field_detection(self) -> None:
         assert DragonFruit._pk_field() == "id"

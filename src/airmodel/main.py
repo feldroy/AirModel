@@ -37,7 +37,7 @@ from types import UnionType
 from typing import Any, Self, get_args, get_origin
 from uuid import UUID
 
-from airfield import AirField
+from airfield import PrimaryKey
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -71,7 +71,6 @@ def _pg_type(python_type: type) -> str:
     return _PY_TO_PG[python_type]
 
 
-
 # ---------------------------------------------------------------------------
 # Helpers for introspecting Pydantic field types
 # ---------------------------------------------------------------------------
@@ -96,10 +95,7 @@ def _unwrap_optional(annotation: Any) -> Any:
 
 
 def _is_primary_key(field_info: FieldInfo) -> bool:
-    extra = field_info.json_schema_extra
-    if isinstance(extra, dict):
-        return bool(extra.get("primary_key"))  # type: ignore[arg-type]
-    return False
+    return any(isinstance(m, PrimaryKey) for m in field_info.metadata)
 
 
 # ---------------------------------------------------------------------------
