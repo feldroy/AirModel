@@ -105,6 +105,3 @@ exclude_also = [
 [tool.uv]
 package = true
 default-groups = ["dev"]
-
-[tool.uv.sources]
-AirField = { path = "../AirField", editable = true }

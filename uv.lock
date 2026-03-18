@@ -5,31 +5,14 @@ requires-python = ">=3.13"
 [[package]]
 name = "airfield"
 version = "0.4.0"
-source = { editable = "../AirField" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pydantic" },
 ]
-
-[package.metadata]
-requires-dist = [{ name = "pydantic" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "coverage" },
-    { name = "pytest" },
-    { name = "ruff" },
-    { name = "ty" },
+sdist = { url = "https://files.pythonhosted.org/packages/5b/4c/f8000d0c8e75ad283afef3b2a1b5d612947ad312f2baf13aa5aaa1c5bfc3/airfield-0.4.0.tar.gz", hash = "sha256:1199c0ac9dadd3c1eadd4c9f8606184932e94acda9924f12b07f05231e004c1c", size = 61865, upload-time = "2026-03-18T16:09:31.336Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4a/01/ab36936051e8604b5b7a97d6e3c24ef7eebc7c114a22b4ebfaf72d56e26f/airfield-0.4.0-py3-none-any.whl", hash = "sha256:03285e65180b02076f3c2d56ee57b7fa8220406c945893f921f71faf7e9f4462", size = 8959, upload-time = "2026-03-18T16:09:29.875Z" },
 ]
-docs = [
-    { name = "mkdocstrings-python" },
-    { name = "zensical" },
-]
-lint = [{ name = "ruff" }]
-test = [
-    { name = "coverage" },
-    { name = "pytest" },
-]
-typecheck = [{ name = "ty" }]
 
 [[package]]
 name = "airmodel"
@@ -69,7 +52,7 @@ typecheck = [
 
 [package.metadata]
 requires-dist = [
-    { name = "airfield", editable = "../AirField" },
+    { name = "airfield", specifier = ">=0.4.0" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "rich" },
