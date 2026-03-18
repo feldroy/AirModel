@@ -663,7 +663,7 @@ class AirDB:
         Example::
 
             async with db.transaction():
-                await Item.create(name="a]")
+                await Item.create(name="a")
                 await Item.create(name="b")  # atomic with the first
         """
         pool = self.pool
