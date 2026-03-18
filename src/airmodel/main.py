@@ -40,6 +40,8 @@ from uuid import UUID
 from pydantic import (
     BaseModel,
     ConfigDict,
+)
+from pydantic import (
     Field as PydanticField,
 )
 from pydantic.fields import FieldInfo
@@ -179,11 +181,11 @@ def _parse_kwargs(kwargs: dict[str, Any], *, start_idx: int = 1) -> tuple[list[s
             values.append(value)
             param_idx += 1
         elif lookup == "contains":
-            conditions.append(f'"{field}" LIKE \'%\' || ${param_idx} || \'%\'')
+            conditions.append(f"\"{field}\" LIKE '%' || ${param_idx} || '%'")
             values.append(value)
             param_idx += 1
         elif lookup == "icontains":
-            conditions.append(f'"{field}" ILIKE \'%\' || ${param_idx} || \'%\'')
+            conditions.append(f"\"{field}\" ILIKE '%' || ${param_idx} || '%'")
             values.append(value)
             param_idx += 1
         elif lookup == "in":
@@ -378,7 +380,14 @@ class AirModel(BaseModel):
         return cls.model_validate(dict(rows[0]))
 
     @classmethod
-    async def filter(cls, *, order_by: str | None = None, limit: int | None = None, offset: int | None = None, **kwargs: Any) -> list[Self]:
+    async def filter(
+        cls,
+        *,
+        order_by: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+        **kwargs: Any,
+    ) -> list[Self]:
         """Fetch all rows matching the given keyword filters.
 
         Supports Django-style ``__`` lookups (gt, gte, lt, lte, contains,
@@ -414,7 +423,13 @@ class AirModel(BaseModel):
         return [cls.model_validate(dict(r)) for r in rows]
 
     @classmethod
-    async def all(cls, *, order_by: str | None = None, limit: int | None = None, offset: int | None = None) -> list[Self]:
+    async def all(
+        cls,
+        *,
+        order_by: str | None = None,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[Self]:
         """Fetch every row from the table.
 
         Args:
@@ -490,8 +505,7 @@ class AirModel(BaseModel):
             offset = i * len(insert_fields)
             placeholders = ", ".join(f"${offset + j + 1}" for j in range(len(insert_fields)))
             value_groups.append(f"({placeholders})")
-            all_values.extend(
-                item[f] for f in insert_fields)
+            all_values.extend(item[f] for f in insert_fields)
 
         values_sql = ", ".join(value_groups)
         sql = f'INSERT INTO "{cls._table_name()}" ({columns}) VALUES {values_sql} RETURNING *'
@@ -560,7 +574,6 @@ class AirModel(BaseModel):
         if pk_value is None:
             msg = "Cannot save a row without a primary key value. Use create() for new rows."
             raise ValueError(msg)
-
 
         if update_fields is not None and len(update_fields) == 0:
             msg = "update_fields cannot be empty. Omit the argument to update all fields."

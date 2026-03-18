@@ -102,7 +102,6 @@ class TestTypeMapping:
     def test_datetime_maps_to_timestamptz(self) -> None:
         assert _PY_TO_PG[datetime] == "TIMESTAMP WITH TIME ZONE"
 
-
     def test_uuid_maps_to_uuid(self) -> None:
         assert _PY_TO_PG[UUID] == "UUID"
 
@@ -483,6 +482,7 @@ class TestAirModelExport:
         assert '"body" TEXT NOT NULL' in sql
         assert '"draft" BOOLEAN NOT NULL' in sql
 
+
 # ---------------------------------------------------------------------------
 # UUID field support
 # ---------------------------------------------------------------------------
@@ -513,7 +513,6 @@ class TestUUIDField:
         col_dict = {c.split()[0].strip('"'): c for c in cols}
         assert "UUID" in col_dict["trace_id"]
         assert "NOT NULL" not in col_dict["trace_id"]
-
 
 
 # ---------------------------------------------------------------------------
@@ -588,9 +587,7 @@ class TestSaveRefreshesInstance:
         db = AirDB()
         db.connect(fake_pool)
         try:
-            fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta"
-            )
+            fruit = DragonFruit(id=1, name="Pink Pitaya", color="magenta")
             await fruit.save()
             assert fake_pool.last_sql is not None
             assert "RETURNING *" in fake_pool.last_sql
@@ -612,10 +609,7 @@ class TestSaveRefreshesInstance:
         db = AirDB()
         db.connect(fake_pool)
         try:
-            fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="", origin=""
-            )
+            fruit = DragonFruit(id=1, name="Pink Pitaya", color="magenta", sweetness="", origin="")
             await fruit.save()
 
             # The database returned different values for these fields.
@@ -642,9 +636,7 @@ class TestDeleteClearsPrimaryKey:
         db = AirDB()
         db.connect(fake_pool)
         try:
-            fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta"
-            )
+            fruit = DragonFruit(id=1, name="Pink Pitaya", color="magenta")
             assert fruit.id == 1
 
             await fruit.delete()
@@ -734,6 +726,7 @@ class TestCRUDWithMockPool:
         try:
             result = await DragonFruit.create(name="Pink Pitaya", color="magenta")
 
+            assert isinstance(result, DragonFruit)
             assert pool.last_sql is not None
             assert pool.last_sql.startswith('INSERT INTO "dragon_fruit"')
             assert "RETURNING *" in pool.last_sql
@@ -1299,9 +1292,7 @@ class TestTransaction:
                 await DragonFruit.create(name="Pink Pitaya", color="magenta")
 
             # The connection's fetchrow should have been called, not the pool's
-            assert conn.fetchrow_called, (
-                "create() inside transaction should use the connection, not the pool"
-            )
+            assert conn.fetchrow_called, "create() inside transaction should use the connection, not the pool"
         finally:
             db.disconnect()
 
@@ -1361,10 +1352,12 @@ class TestBulkOperations:
         )
         _wire_pool(pool)
         try:
-            results = await DragonFruit.bulk_create([
-                {"name": "Pink Pitaya", "color": "magenta"},
-                {"name": "Yellow Dragon", "color": "yellow"},
-            ])
+            results = await DragonFruit.bulk_create(
+                [
+                    {"name": "Pink Pitaya", "color": "magenta"},
+                    {"name": "Yellow Dragon", "color": "yellow"},
+                ]
+            )
 
             assert isinstance(results, list)
             assert len(results) == 2
@@ -1388,11 +1381,13 @@ class TestBulkOperations:
         )
         _wire_pool(pool)
         try:
-            await DragonFruit.bulk_create([
-                {"name": "Pink Pitaya", "color": "magenta"},
-                {"name": "Yellow Dragon", "color": "yellow"},
-                {"name": "White Pitaya", "color": "white"},
-            ])
+            await DragonFruit.bulk_create(
+                [
+                    {"name": "Pink Pitaya", "color": "magenta"},
+                    {"name": "Yellow Dragon", "color": "yellow"},
+                    {"name": "White Pitaya", "color": "white"},
+                ]
+            )
 
             assert pool.last_sql is not None
             assert pool.last_sql.startswith('INSERT INTO "dragon_fruit"')
@@ -1423,10 +1418,9 @@ class TestBulkOperations:
         pool = BulkPool(execute_return="UPDATE 3")
         _wire_pool(pool)
         try:
-            count = await DragonFruit.bulk_update(
-                {"color": "red"}, name="Pink Pitaya"
-            )
+            count = await DragonFruit.bulk_update({"color": "red"}, name="Pink Pitaya")
 
+            assert count == 3
             assert pool.last_sql is not None
             assert pool.last_sql.startswith('UPDATE "dragon_fruit" SET')
             assert '"color" =' in pool.last_sql
@@ -1441,10 +1435,9 @@ class TestBulkOperations:
         pool = BulkPool(execute_return="UPDATE 5")
         _wire_pool(pool)
         try:
-            count = await DragonFruit.bulk_update(
-                {"color": "red"}, sweetness__contains="high"
-            )
+            count = await DragonFruit.bulk_update({"color": "red"}, sweetness__contains="high")
 
+            assert count == 5
             assert pool.last_sql is not None
             assert "WHERE" in pool.last_sql
             assert "LIKE" in pool.last_sql
@@ -1457,9 +1450,7 @@ class TestBulkOperations:
         pool = BulkPool(execute_return="UPDATE 7")
         _wire_pool(pool)
         try:
-            count = await DragonFruit.bulk_update(
-                {"color": "red"}, name__contains="Dragon"
-            )
+            count = await DragonFruit.bulk_update({"color": "red"}, name__contains="Dragon")
 
             assert isinstance(count, int)
             assert count == 7
@@ -1475,6 +1466,7 @@ class TestBulkOperations:
         try:
             count = await DragonFruit.bulk_delete(confirmed=False)
 
+            assert count == 2
             assert pool.last_sql is not None
             assert pool.last_sql.startswith('DELETE FROM "dragon_fruit" WHERE')
             assert '"confirmed" = $1' in pool.last_sql
@@ -1488,6 +1480,7 @@ class TestBulkOperations:
         try:
             count = await DragonFruit.bulk_delete(sweetness__lt=3)
 
+            assert count == 4
             assert pool.last_sql is not None
             assert pool.last_sql.startswith('DELETE FROM "dragon_fruit" WHERE')
             assert '"sweetness" < $1' in pool.last_sql
@@ -1542,8 +1535,11 @@ class TestSaveUpdateFields:
         self._wire_pool(pool)
         try:
             fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="high", origin="Vietnam",
+                id=1,
+                name="Pink Pitaya",
+                color="magenta",
+                sweetness="high",
+                origin="Vietnam",
             )
             fruit.name = "White Pitaya"
             await fruit.save(update_fields=["name"])
@@ -1567,8 +1563,11 @@ class TestSaveUpdateFields:
         self._wire_pool(pool)
         try:
             fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="high", origin="Vietnam",
+                id=1,
+                name="Pink Pitaya",
+                color="magenta",
+                sweetness="high",
+                origin="Vietnam",
             )
             fruit.name = "White Pitaya"
             await fruit.save(update_fields=["name"])
@@ -1585,8 +1584,11 @@ class TestSaveUpdateFields:
         self._wire_pool(pool)
         try:
             fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="high", origin="Vietnam",
+                id=1,
+                name="Pink Pitaya",
+                color="magenta",
+                sweetness="high",
+                origin="Vietnam",
             )
             fruit.name = "White Pitaya"
             await fruit.save(update_fields=["name"])
@@ -1603,8 +1605,11 @@ class TestSaveUpdateFields:
         self._wire_pool(pool)
         try:
             fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="high", origin="Vietnam",
+                id=1,
+                name="Pink Pitaya",
+                color="magenta",
+                sweetness="high",
+                origin="Vietnam",
             )
             await fruit.save()
 
@@ -1612,9 +1617,7 @@ class TestSaveUpdateFields:
             assert sql is not None
             set_clause = sql.split("SET")[1].split("WHERE")[0]
             for col in ("created_at", "name", "color", "sweetness", "origin"):
-                assert f'"{col}"' in set_clause, (
-                    f'"{col}" should appear in SET when no update_fields given'
-                )
+                assert f'"{col}"' in set_clause, f'"{col}" should appear in SET when no update_fields given'
         finally:
             self._unwire_pool()
 
@@ -1625,8 +1628,11 @@ class TestSaveUpdateFields:
         self._wire_pool(pool)
         try:
             fruit = DragonFruit(
-                id=1, name="Pink Pitaya", color="magenta",
-                sweetness="high", origin="Vietnam",
+                id=1,
+                name="Pink Pitaya",
+                color="magenta",
+                sweetness="high",
+                origin="Vietnam",
             )
             with pytest.raises(ValueError, match="update_fields"):
                 await fruit.save(update_fields=[])
