@@ -2,58 +2,165 @@
 
 ![PyPI version](https://img.shields.io/pypi/v/AirModel.svg)
 
-The ORM made for Air web framework, usable by non-Air projects too. Async work with Pydantic models and Air forms
+Async ORM for Pydantic models and PostgreSQL, with a Django-inspired query API.
 
-* GitHub: https://github.com/feldroy/AirModel/
-* PyPI package: https://pypi.org/project/AirModel/
-* Created by: **[Audrey M. Roy Greenfeld](https://audrey.feldroy.com/)** | GitHub [@audreyfeldroy](https://github.com/audreyfeldroy) | PyPI [@audreyr](https://pypi.org/user/audreyr/)
-* Free software: MIT License
+* Created by [Audrey M. Roy Greenfeld](https://audrey.feldroy.com/) | GitHub [@audreyfeldroy](https://github.com/audreyfeldroy) | PyPI [@audreyr](https://pypi.org/user/audreyr/)
+* MIT License
+* [GitHub](https://github.com/feldroy/AirModel/) | [PyPI](https://pypi.org/project/AirModel/) | [Documentation](https://feldroy.github.io/airmodel/)
 
-## Features
+Define your models with standard Pydantic type annotations. AirModel turns them into PostgreSQL tables and gives you async `create`, `get`, `filter`, `all`, `count`, `save`, and `delete`, plus Django-style lookups like `price__gte=10` and `name__icontains="dragon"`.
 
-* TODO
+```python
+from airmodel import AirDB, AirModel, Field, MultipleObjectsReturned
 
-## Documentation
+class UnicornSighting(AirModel):
+    id: int | None = Field(default=None, primary_key=True)
+    location: str
+    sparkle_rating: int
+    confirmed: bool = Field(default=False)
 
-Documentation is built with [Zensical](https://zensical.org/) and deployed to GitHub Pages.
-
-* **Live site:** https://feldroy.github.io/airmodel/
-* **Preview locally:** `just docs-serve` (serves at http://localhost:8000)
-* **Build:** `just docs-build`
-
-API documentation is auto-generated from docstrings using [mkdocstrings](https://mkdocstrings.github.io/).
-
-Docs deploy automatically on push to `main` via GitHub Actions. To enable this, go to your repo's Settings > Pages and set the source to **GitHub Actions**.
-
-## Development
-
-To set up for local development:
-
-```bash
-# Clone your fork
-git clone git@github.com:your_username/AirModel.git
-cd AirModel
-
-# Install in editable mode with live updates
-uv tool install --editable .
+# In your async handlers:
+await UnicornSighting.create(location="Rainbow Falls", sparkle_rating=11)
+sighting = await UnicornSighting.get(id=1)
+bright_ones = await UnicornSighting.filter(sparkle_rating__gte=8, confirmed=True)
+count = await UnicornSighting.count()
 ```
 
-This installs the CLI globally but with live updates - any changes you make to the source code are immediately available when you run `airmodel`.
+`Field()` works like Pydantic's `Field()` but adds `primary_key=True` support for auto-incrementing columns.
 
-Run tests:
+Built on [asyncpg](https://github.com/MagicStack/asyncpg) and [Pydantic v2](https://docs.pydantic.dev/). Works with the [Air](https://github.com/feldroy/air) web framework or any async Python project.
 
-```bash
-uv run pytest
-```
-
-Run quality checks (format, lint, type check, test):
+## Install
 
 ```bash
-just qa
+uv add AirModel
 ```
 
-## Author
+## Connect to PostgreSQL
 
-AirModel was created in 2026 by Audrey M. Roy Greenfeld.
+### With Air
 
-Built with [Cookiecutter](https://github.com/cookiecutter/cookiecutter) and the [audreyfeldroy/cookiecutter-pypackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) project template.
+```python
+db = AirDB()
+app = air.Air(lifespan=db.lifespan("postgresql://user:pass@host/dbname"))
+```
+
+`db.lifespan()` returns a factory that opens a connection pool on startup and closes it on shutdown. All CRUD methods use the pool automatically.
+
+### With any async Python project
+
+```python
+import asyncpg
+from airmodel import AirDB
+
+db = AirDB()
+pool = await asyncpg.create_pool("postgresql://user:pass@host/dbname")
+db.connect(pool)
+
+# ... use your models ...
+
+await pool.close()
+db.disconnect()
+```
+
+### Creating tables
+
+Call `create_tables()` after the pool is ready:
+
+```python
+await db.create_tables()
+```
+
+This runs `CREATE TABLE IF NOT EXISTS` for every `AirModel` subclass. It creates missing tables but won't add new columns to existing ones. Use `ALTER TABLE` or a migration tool for schema changes.
+
+## Query API
+
+Every method is async. Table names are derived from class names (`UnicornSighting` becomes `unicorn_sighting`).
+
+### CRUD
+
+```python
+# Create
+sighting = await UnicornSighting.create(location="Rainbow Falls", sparkle_rating=11)
+
+# Read one (returns None if not found, raises MultipleObjectsReturned if ambiguous)
+sighting = await UnicornSighting.get(id=1)
+
+# Read many
+all_sightings = await UnicornSighting.all()
+all_sorted = await UnicornSighting.all(order_by="-sparkle_rating", limit=10)
+confirmed = await UnicornSighting.filter(confirmed=True, order_by="-sparkle_rating")
+page = await UnicornSighting.filter(confirmed=True, limit=10, offset=20)
+
+# filter() with no filter kwargs is equivalent to all():
+everything = await UnicornSighting.filter(order_by="location")
+
+# Count
+total = await UnicornSighting.count()
+bright = await UnicornSighting.count(sparkle_rating__gte=8)
+
+# Update
+sighting.sparkle_rating = 12
+await sighting.save()
+await sighting.save(update_fields=["sparkle_rating"])  # partial update
+
+# Delete
+await sighting.delete()
+```
+
+### Django-style lookups
+
+Append `__lookup` to any field name in `filter()`, `get()`, or `count()`:
+
+| Lookup | SQL | Example |
+|---|---|---|
+| `field__gt` | `>` | `sparkle_rating__gt=5` |
+| `field__gte` | `>=` | `sparkle_rating__gte=5` |
+| `field__lt` | `<` | `sparkle_rating__lt=10` |
+| `field__lte` | `<=` | `sparkle_rating__lte=10` |
+| `field__contains` | `LIKE '%...%'` | `location__contains="Falls"` |
+| `field__icontains` | `ILIKE '%...%'` | `location__icontains="falls"` |
+| `field__in` | `= ANY(...)` | `sparkle_rating__in=[8, 9, 10]` |
+| `field__isnull` | `IS NULL` / `IS NOT NULL` | `confirmed__isnull=True` |
+
+### Bulk operations
+
+Single-query operations that minimize round trips. Both `bulk_update()` and `bulk_delete()` require at least one filter argument to prevent accidental mass operations.
+
+```python
+# Insert many rows in one INSERT ... RETURNING *
+sightings = await UnicornSighting.bulk_create([
+    {"location": "Rainbow Falls", "sparkle_rating": 11},
+    {"location": "Crystal Cave", "sparkle_rating": 8},
+])
+
+# UPDATE ... WHERE with row count
+updated = await UnicornSighting.bulk_update(
+    {"confirmed": True}, sparkle_rating__gte=10
+)
+
+# DELETE ... WHERE with row count
+deleted = await UnicornSighting.bulk_delete(confirmed=False)
+```
+
+### Transactions
+
+```python
+async with db.transaction():
+    await UnicornSighting.create(location="Rainbow Falls", sparkle_rating=11)
+    await UnicornSighting.create(location="Crystal Cave", sparkle_rating=8)
+    # Both rows commit together, or neither does.
+```
+
+## Supported types
+
+| Python | PostgreSQL |
+|---|---|
+| `str` | `TEXT` |
+| `int` | `INTEGER` |
+| `float` | `DOUBLE PRECISION` |
+| `bool` | `BOOLEAN` |
+| `datetime` | `TIMESTAMP WITH TIME ZONE` |
+| `UUID` | `UUID` |
+
+Fields with `primary_key=True` become `BIGSERIAL PRIMARY KEY`. Optional fields (`str | None`) are nullable. Required fields without defaults get `NOT NULL`.
