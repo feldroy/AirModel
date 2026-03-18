@@ -11,7 +11,7 @@ Async ORM for Pydantic models and PostgreSQL, with a Django-inspired query API.
 Define your models with standard Pydantic type annotations. AirModel turns them into PostgreSQL tables and gives you async `create`, `get`, `filter`, `all`, `count`, `save`, and `delete`, plus Django-style lookups like `price__gte=10` and `name__icontains="dragon"`.
 
 ```python
-from airmodel import AirDB, AirModel, Field, MultipleObjectsReturned
+from airmodel import AirDB, AirModel, Field
 
 class UnicornSighting(AirModel):
     id: int | None = Field(default=None, primary_key=True)
@@ -40,12 +40,20 @@ uv add AirModel
 
 ### With Air
 
+Zero config. Set `DATABASE_URL` in the environment and Air connects automatically:
+
 ```python
-db = AirDB()
-app = air.Air(lifespan=db.lifespan("postgresql://user:pass@host/dbname"))
+import air
+from airmodel import AirModel, Field
+
+app = air.Air()  # reads DATABASE_URL, connects on startup
+
+class Item(AirModel):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
 ```
 
-`db.lifespan()` returns a factory that opens a connection pool on startup and closes it on shutdown. All CRUD methods use the pool automatically.
+If `DATABASE_URL` is not set, `app.db` is `None` and no database is configured. The pool is available as `app.db` for transactions and table creation.
 
 ### With any async Python project
 
@@ -146,7 +154,8 @@ deleted = await UnicornSighting.bulk_delete(confirmed=False)
 ### Transactions
 
 ```python
-async with db.transaction():
+# With Air: app.db — without Air: your AirDB() instance
+async with app.db.transaction():
     await UnicornSighting.create(location="Rainbow Falls", sparkle_rating=11)
     await UnicornSighting.create(location="Crystal Cave", sparkle_rating=8)
     # Both rows commit together, or neither does.
