@@ -28,7 +28,7 @@ count = await UnicornSighting.count()
 
 `AirField()` works like Pydantic's `Field()` but adds `primary_key=True` and UI presentation metadata (`label`, `widget`, `placeholder`, etc.).
 
-Built on [asyncpg](https://github.com/MagicStack/asyncpg) and [Pydantic v2](https://docs.pydantic.dev/). Works with the [Air](https://github.com/feldroy/air) web framework or any async Python project.
+Built on [asyncpg](https://github.com/MagicStack/asyncpg) and [Pydantic v2](https://docs.pydantic.dev/). Works with [Air](https://airwebframework.org/) or any async Python project.
 
 ## Install
 
