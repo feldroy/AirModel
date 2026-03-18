@@ -1518,7 +1518,7 @@ class TestSaveUpdateFields:
 
     def _make_pool(self, row: dict[str, object] | None = None) -> FakePool:
         """Build a FakePool that returns a full DragonFruit row."""
-        default_row = {
+        default_row: dict[str, object] = {
             "id": 1,
             "created_at": datetime(2026, 3, 17),
             "name": "Pink Pitaya",

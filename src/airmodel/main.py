@@ -130,7 +130,7 @@ def _unwrap_optional(annotation: Any) -> Any:
 def _is_primary_key(field_info: FieldInfo) -> bool:
     extra = field_info.json_schema_extra
     if isinstance(extra, dict):
-        return bool(extra.get("primary_key"))
+        return bool(extra.get("primary_key"))  # type: ignore[arg-type]
     return False
 
 
@@ -267,7 +267,7 @@ class AirModel(BaseModel):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
-        _table_registry.append(cls)  # type: ignore[arg-type]
+        _table_registry.append(cls)
 
     # -- SQL generation helpers ----------------------------------------------
 
@@ -691,7 +691,11 @@ class AirDB:
                 await Item.create(name="a]")
                 await Item.create(name="b")  # atomic with the first
         """
-        async with self.pool.acquire() as conn:
+        pool = self.pool
+        if pool is None:
+            msg = "No database connection. Ensure AirDB.lifespan() is active."
+            raise RuntimeError(msg)
+        async with pool.acquire() as conn:
             txn = conn.transaction()
             await txn.start()
             token = _current_connection.set(conn)
