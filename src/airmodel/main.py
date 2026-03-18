@@ -519,7 +519,7 @@ class AirModel(BaseModel):
         # asyncpg returns e.g. "DELETE 5"
         return int(status.split()[-1])
 
-        # -- Instance methods ----------------------------------------------------
+    # -- Instance methods ----------------------------------------------------
 
     async def save(self, *, update_fields: list[str] | None = None) -> None:
         """Update the row identified by this instance's primary key.
