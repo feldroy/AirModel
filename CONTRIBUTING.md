@@ -54,13 +54,13 @@ Ready to contribute? Here's how to set up `airmodel` for local development.
 2. Clone your fork locally:
 
    ```sh
-   git clone git@github.com:your_name_here/airmodel.git
+   git clone git@github.com:your_name_here/AirModel.git
    ```
 
 3. Install your local copy with uv:
 
    ```sh
-   cd airmodel/
+   cd AirModel/
    uv sync
    ```
 
