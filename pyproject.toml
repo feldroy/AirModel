@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "AirModel"
-version = "0.1.1"
+version = "0.1.2"
 description = "Async ORM for Pydantic models and PostgreSQL, with a Django-inspired API"
 readme = "README.md"
 authors = [
@@ -27,7 +27,7 @@ license = {text = "MIT"}
 dependencies = [
     "pydantic>=2.0",
     "asyncpg>=0.30.0",
-    "AirField>=0.2.0",
+    "AirField>=0.3.1",
     "typer",
     "rich",
 ]

@@ -4,7 +4,7 @@ requires-python = ">=3.13"
 
 [[package]]
 name = "airfield"
-version = "0.2.0"
+version = "0.3.1"
 source = { editable = "../AirField" }
 dependencies = [
     { name = "pydantic" },
@@ -33,7 +33,7 @@ typecheck = [{ name = "ty" }]
 
 [[package]]
 name = "airmodel"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "airfield" },
