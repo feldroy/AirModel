@@ -56,10 +56,10 @@ docs = [
 ]
 
 [project.urls]
-bugs = "https://github.com/feldroy/airmodel/issues"
-changelog = "https://github.com/feldroy/airmodel/releases"
-documentation = "https://feldroy.github.io/airmodel/"
-homepage = "https://github.com/feldroy/airmodel"
+bugs = "https://github.com/feldroy/AirModel/issues"
+changelog = "https://github.com/feldroy/AirModel/releases"
+documentation = "https://feldroy.github.io/AirModel/"
+homepage = "https://github.com/feldroy/AirModel"
 
 [project.scripts]
 airmodel = "airmodel.cli:app"

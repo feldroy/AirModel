@@ -1,8 +1,8 @@
 [project]
 site_name = "AirModel"
-site_url = "https://feldroy.github.io/airmodel/"
-repo_url = "https://github.com/feldroy/airmodel"
-repo_name = "feldroy/airmodel"
+site_url = "https://feldroy.github.io/AirModel/"
+repo_url = "https://github.com/feldroy/AirModel"
+repo_name = "feldroy/AirModel"
 
 nav = [
   { "Home" = "index.md" },

@@ -2,7 +2,7 @@
 
 ## Reporting a Vulnerability
 
-If you find a security vulnerability in AirModel, please report it through [GitHub's private vulnerability reporting](https://github.com/feldroy/airmodel/security/advisories/new). This keeps the details private while we work on a fix.
+If you find a security vulnerability in AirModel, please report it through [GitHub's private vulnerability reporting](https://github.com/feldroy/AirModel/security/advisories/new). This keeps the details private while we work on a fix.
 
 Please include:
 

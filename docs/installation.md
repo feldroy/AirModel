@@ -16,18 +16,18 @@ pip install AirModel
 
 ## From source
 
-The source files for AirModel can be downloaded from the [Github repo](https://github.com/feldroy/airmodel).
+The source files for AirModel can be downloaded from the [Github repo](https://github.com/feldroy/AirModel).
 
 You can either clone the public repository:
 
 ```sh
-git clone https://github.com/feldroy/airmodel
+git clone https://github.com/feldroy/AirModel
 ```
 
-Or download the [tarball](https://github.com/feldroy/airmodel/tarball/main):
+Or download the [tarball](https://github.com/feldroy/AirModel/tarball/main):
 
 ```sh
-curl -OJL https://github.com/feldroy/airmodel/tarball/main
+curl -OJL https://github.com/feldroy/AirModel/tarball/main
 ```
 
 Once you have a copy of the source, you can install it with:
