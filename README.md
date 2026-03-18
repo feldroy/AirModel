@@ -6,7 +6,7 @@ The ORM made for Air web framework, usable by non-Air projects too. Async work w
 
 * GitHub: https://github.com/feldroy/AirModel/
 * PyPI package: https://pypi.org/project/AirModel/
-* Created by: **[Audrey M. Roy Greenfeld](https://audrey.feldroy.com/)** | GitHub https://github.com/audreyfeldroy | PyPI https://pypi.org/user/audreyr/
+* Created by: **[Audrey M. Roy Greenfeld](https://audrey.feldroy.com/)** | GitHub [@audreyfeldroy](https://github.com/audreyfeldroy) | PyPI [@audreyr](https://pypi.org/user/audreyr/)
 * Free software: MIT License
 
 ## Features
