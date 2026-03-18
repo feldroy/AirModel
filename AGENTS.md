@@ -17,7 +17,7 @@ uv add AirModel
 ```
 
 ```python
-from airmodel import AirDB
+from airmodel import AirDB, AirField, AirModel
 
 db = AirDB()
 ```
@@ -52,13 +52,13 @@ Won't alter existing tables. Use `ALTER TABLE` or a migration tool for schema ch
 
 ```python
 class UnicornSighting(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     location: str
     sparkle_rating: int
-    confirmed: bool = Field(default=False)
+    confirmed: bool = AirField(default=False)
 ```
 
-- `Field(primary_key=True)` becomes `BIGSERIAL PRIMARY KEY`
+- `AirField(primary_key=True)` becomes `BIGSERIAL PRIMARY KEY`
 - Table name derives from class name: `UnicornSighting` becomes `unicorn_sighting`
 - Required fields without defaults get `NOT NULL`
 - `str | None` is nullable

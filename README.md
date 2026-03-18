@@ -11,13 +11,13 @@ Async ORM for Pydantic models and PostgreSQL, with a Django-inspired query API.
 Define your models with standard Pydantic type annotations. AirModel turns them into PostgreSQL tables and gives you async `create`, `get`, `filter`, `all`, `count`, `save`, and `delete`, plus Django-style lookups like `price__gte=10` and `name__icontains="dragon"`.
 
 ```python
-from airmodel import AirDB, AirModel, Field
+from airmodel import AirDB, AirModel, AirField
 
 class UnicornSighting(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     location: str
     sparkle_rating: int
-    confirmed: bool = Field(default=False)
+    confirmed: bool = AirField(default=False)
 
 # In your async handlers:
 await UnicornSighting.create(location="Rainbow Falls", sparkle_rating=11)
@@ -26,7 +26,7 @@ bright_ones = await UnicornSighting.filter(sparkle_rating__gte=8, confirmed=True
 count = await UnicornSighting.count()
 ```
 
-`Field()` works like Pydantic's `Field()` but adds `primary_key=True` support for auto-incrementing columns.
+`AirField()` works like Pydantic's `Field()` but adds `primary_key=True` and UI presentation metadata (`label`, `widget`, `placeholder`, etc.).
 
 Built on [asyncpg](https://github.com/MagicStack/asyncpg) and [Pydantic v2](https://docs.pydantic.dev/). Works with the [Air](https://github.com/feldroy/air) web framework or any async Python project.
 
@@ -44,12 +44,12 @@ Zero config. Set `DATABASE_URL` in the environment and Air connects automaticall
 
 ```python
 import air
-from airmodel import AirModel, Field
+from airmodel import AirModel, AirField
 
 app = air.Air()  # reads DATABASE_URL, connects on startup
 
 class Item(AirModel):
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = AirField(default=None, primary_key=True)
     name: str
 ```
 
