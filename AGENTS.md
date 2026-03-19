@@ -46,7 +46,7 @@ db.disconnect()
 await db.create_tables()  # CREATE TABLE IF NOT EXISTS for every AirModel subclass
 ```
 
-Won't alter existing tables. Use `ALTER TABLE` or a migration tool for schema changes.
+Auto-migrates existing tables: if you add a field to a model, `create_tables()` runs `ALTER TABLE ADD COLUMN` for any columns not yet in the database. Non-destructive: never drops columns, never changes types. New columns are added without `NOT NULL` (existing rows have no value for them); Pydantic still enforces requirements at the app layer.
 
 ## Define models
 

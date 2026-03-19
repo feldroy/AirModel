@@ -79,7 +79,7 @@ Call `create_tables()` after the pool is ready:
 await db.create_tables()
 ```
 
-This runs `CREATE TABLE IF NOT EXISTS` for every `AirModel` subclass. It creates missing tables but won't add new columns to existing ones. Use `ALTER TABLE` or a migration tool for schema changes.
+This runs `CREATE TABLE IF NOT EXISTS` for every `AirModel` subclass and auto-migrates existing tables: any model fields not yet in the database get added via `ALTER TABLE ADD COLUMN`. Non-destructive: never drops columns, never changes types. New columns are added without `NOT NULL` so existing rows aren't broken; Pydantic still enforces requirements at the app layer.
 
 ## Query API
 
