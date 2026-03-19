@@ -345,6 +345,22 @@ class AirModel(BaseModel):
         return f'CREATE TABLE IF NOT EXISTS "{cls._table_name()}" ({cols_sql})'
 
     @classmethod
+    def _add_column_sql(cls, field_name: str) -> str:
+        """Generate an ``ALTER TABLE ADD COLUMN`` statement for a single field.
+
+        Never includes ``NOT NULL``, even for required fields, because
+        existing rows have no value for the new column.
+        """
+        field_info = cls.model_fields[field_name]
+        annotation = field_info.annotation
+        if _is_optional(annotation):
+            base_type = _unwrap_optional(annotation)
+        else:
+            base_type = annotation
+        pg_type = _pg_type(base_type)
+        return f'ALTER TABLE "{cls._table_name()}" ADD COLUMN "{field_name}" {pg_type}'
+
+    @classmethod
     def _non_pk_fields(cls) -> list[str]:
         """Return field names excluding the primary key."""
         pk = cls._pk_field()
@@ -636,6 +652,16 @@ class AirModel(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+async def _get_existing_columns(pool: Any, table_name: str) -> set[str]:
+    """Query ``information_schema.columns`` for a table's current column names."""
+    rows = await pool.fetch(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_schema = 'public' AND table_name = $1",
+        table_name,
+    )
+    return {row["column_name"] for row in rows}
+
+
 class AirDB:
     """Manages an asyncpg connection pool for :class:`AirModel` subclasses.
 
@@ -744,17 +770,13 @@ class AirDB:
     # -- table management ----------------------------------------------------
 
     async def create_tables(self) -> None:
-        """Execute ``CREATE TABLE IF NOT EXISTS`` for every registered :class:`AirModel`.
+        """Create or migrate tables for every registered :class:`AirModel`.
 
-        Tables are registered automatically when their class body is executed,
-        so simply importing your models is enough.
-
-        .. warning::
-
-            This creates tables that don't exist yet but will **not** alter
-            existing tables. If you add a column to a model after the table
-            has been created, you must run the ALTER TABLE yourself or use
-            a migration tool.
+        For each model, runs ``CREATE TABLE IF NOT EXISTS`` and then
+        ``ALTER TABLE ADD COLUMN`` for any model fields not yet present
+        in the database. Non-destructive: never drops columns, never
+        changes types. New columns are added without ``NOT NULL`` so
+        existing rows aren't broken.
         """
         if self.pool is None:
             msg = "Database pool is not initialized. Did you forget to use db.lifespan()?"
@@ -762,3 +784,14 @@ class AirDB:
         for table_cls in _table_registry:
             sql = table_cls._create_table_sql()
             await self.pool.execute(sql)
+
+            existing = await _get_existing_columns(self.pool, table_cls._table_name())
+            if not existing:
+                continue
+
+            pk = table_cls._pk_field()
+            for field_name in table_cls.model_fields:
+                if field_name == pk:
+                    continue
+                if field_name not in existing:
+                    await self.pool.execute(table_cls._add_column_sql(field_name))
