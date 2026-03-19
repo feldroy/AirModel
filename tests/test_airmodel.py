@@ -64,22 +64,22 @@ class Cassava(AirModel):
 
 class TestTableName:
     def test_dragon_fruit_snake_case(self) -> None:
-        assert DragonFruit._table_name() == "dragon_fruit"
+        assert DragonFruit._table_name() == "test_airmodel_dragon_fruit"
 
     def test_star_fruit_snake_case(self) -> None:
-        assert StarFruit._table_name() == "star_fruit"
+        assert StarFruit._table_name() == "test_airmodel_star_fruit"
 
     def test_unicorn_sighting_snake_case(self) -> None:
-        assert UnicornSighting._table_name() == "unicorn_sighting"
+        assert UnicornSighting._table_name() == "test_airmodel_unicorn_sighting"
 
     def test_ube_pancake_snake_case(self) -> None:
-        assert UbePancake._table_name() == "ube_pancake"
+        assert UbePancake._table_name() == "test_airmodel_ube_pancake"
 
     def test_two_word_name_snake_case(self) -> None:
-        assert BokChoy._table_name() == "bok_choy"
+        assert BokChoy._table_name() == "test_airmodel_bok_choy"
 
     def test_single_word_name(self) -> None:
-        assert Cassava._table_name() == "cassava"
+        assert Cassava._table_name() == "test_airmodel_cassava"
 
 
 # ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ class TestColumnDefs:
 class TestCreateTableSQL:
     def test_create_table_starts_with_create_table_if_not_exists(self) -> None:
         sql = DragonFruit._create_table_sql()
-        assert sql.startswith('CREATE TABLE IF NOT EXISTS "dragon_fruit" (')
+        assert sql.startswith('CREATE TABLE IF NOT EXISTS "test_airmodel_dragon_fruit" (')
 
     def test_create_table_contains_all_columns(self) -> None:
         sql = DragonFruit._create_table_sql()
@@ -208,7 +208,7 @@ class TestCreateTableSQL:
 
     def test_simple_model_create_table(self) -> None:
         sql = StarFruit._create_table_sql()
-        assert '"star_fruit"' in sql
+        assert '"test_airmodel_star_fruit"' in sql
         assert '"id" BIGSERIAL PRIMARY KEY' in sql
         assert '"title" TEXT NOT NULL' in sql
         assert '"score" DOUBLE PRECISION NOT NULL' in sql
@@ -478,7 +478,7 @@ class TestAirModelExport:
             draft: bool
 
         sql = Article._create_table_sql()
-        assert sql.startswith('CREATE TABLE IF NOT EXISTS "article" (')
+        assert sql.startswith('CREATE TABLE IF NOT EXISTS "test_airmodel_article" (')
         assert '"id" BIGSERIAL PRIMARY KEY' in sql
         assert '"title" TEXT NOT NULL' in sql
         assert '"body" TEXT NOT NULL' in sql
@@ -730,7 +730,7 @@ class TestCRUDWithMockPool:
 
             assert isinstance(result, DragonFruit)
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('INSERT INTO "dragon_fruit"')
+            assert pool.last_sql.startswith('INSERT INTO "test_airmodel_dragon_fruit"')
             assert "RETURNING *" in pool.last_sql
             assert '"name"' in pool.last_sql
             assert '"color"' in pool.last_sql
@@ -765,7 +765,7 @@ class TestCRUDWithMockPool:
             result = await DragonFruit.get(id=1)
 
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('SELECT * FROM "dragon_fruit" WHERE')
+            assert pool.last_sql.startswith('SELECT * FROM "test_airmodel_dragon_fruit" WHERE')
             assert "LIMIT 2" in pool.last_sql
             assert isinstance(result, DragonFruit)
             assert result.id == 1
@@ -804,7 +804,7 @@ class TestCRUDWithMockPool:
             results = await DragonFruit.filter(color="magenta")
 
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('SELECT * FROM "dragon_fruit" WHERE')
+            assert pool.last_sql.startswith('SELECT * FROM "test_airmodel_dragon_fruit" WHERE')
             assert '"color" = $1' in pool.last_sql
             assert isinstance(results, list)
             assert len(results) == 1
@@ -821,7 +821,7 @@ class TestCRUDWithMockPool:
 
             assert pool.last_sql is not None
             # all() produces a bare SELECT * with no WHERE
-            assert pool.last_sql == 'SELECT * FROM "dragon_fruit"'
+            assert pool.last_sql == 'SELECT * FROM "test_airmodel_dragon_fruit"'
             assert len(results) == 2
         finally:
             _unwire_pool()
@@ -835,7 +835,7 @@ class TestCRUDWithMockPool:
         try:
             results = await DragonFruit.all()
 
-            assert pool.last_sql == 'SELECT * FROM "dragon_fruit"'
+            assert pool.last_sql == 'SELECT * FROM "test_airmodel_dragon_fruit"'
             assert pool.last_args == ()
             assert isinstance(results, list)
             assert len(results) == 2
@@ -853,7 +853,7 @@ class TestCRUDWithMockPool:
         try:
             result = await DragonFruit.count()
 
-            assert pool.last_sql == 'SELECT COUNT(*) FROM "dragon_fruit"'
+            assert pool.last_sql == 'SELECT COUNT(*) FROM "test_airmodel_dragon_fruit"'
             assert pool.last_args == ()
             assert result == 42
         finally:
@@ -867,7 +867,7 @@ class TestCRUDWithMockPool:
             result = await DragonFruit.count(color="magenta")
 
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('SELECT COUNT(*) FROM "dragon_fruit" WHERE')
+            assert pool.last_sql.startswith('SELECT COUNT(*) FROM "test_airmodel_dragon_fruit" WHERE')
             assert '"color" = $1' in pool.last_sql
             assert result == 7
         finally:
@@ -1392,7 +1392,7 @@ class TestBulkOperations:
             )
 
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('INSERT INTO "dragon_fruit"')
+            assert pool.last_sql.startswith('INSERT INTO "test_airmodel_dragon_fruit"')
             assert "RETURNING *" in pool.last_sql
             # Should have multiple value placeholders (one set per row)
             # e.g. ($1, $2), ($3, $4), ($5, $6)
@@ -1424,7 +1424,7 @@ class TestBulkOperations:
 
             assert count == 3
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('UPDATE "dragon_fruit" SET')
+            assert pool.last_sql.startswith('UPDATE "test_airmodel_dragon_fruit" SET')
             assert '"color" =' in pool.last_sql
             assert "WHERE" in pool.last_sql
             assert '"name" =' in pool.last_sql
@@ -1470,7 +1470,7 @@ class TestBulkOperations:
 
             assert count == 2
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('DELETE FROM "dragon_fruit" WHERE')
+            assert pool.last_sql.startswith('DELETE FROM "test_airmodel_dragon_fruit" WHERE')
             assert '"confirmed" = $1' in pool.last_sql
         finally:
             _unwire_pool()
@@ -1484,7 +1484,7 @@ class TestBulkOperations:
 
             assert count == 4
             assert pool.last_sql is not None
-            assert pool.last_sql.startswith('DELETE FROM "dragon_fruit" WHERE')
+            assert pool.last_sql.startswith('DELETE FROM "test_airmodel_dragon_fruit" WHERE')
             assert '"sweetness" < $1' in pool.last_sql
             assert pool.last_args == (3,)
         finally:

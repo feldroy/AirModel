@@ -29,10 +29,13 @@ Example::
 from __future__ import annotations
 
 import re
+import tomllib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
 from datetime import datetime
+from functools import lru_cache
+from pathlib import Path
 from types import UnionType
 from typing import Any, Self, get_args, get_origin
 from uuid import UUID
@@ -43,6 +46,63 @@ from pydantic import (
     ConfigDict,
 )
 from pydantic.fields import FieldInfo
+
+# ---------------------------------------------------------------------------
+# Table prefix: auto-derived from module name or pyproject.toml
+# ---------------------------------------------------------------------------
+
+_GENERIC_MODULES = frozenset({"main", "app", "models", "__main__", "server"})
+
+
+def _normalize_project_name(name: str) -> str:
+    """Normalize a pyproject.toml project name for use as a table prefix.
+
+    Strips common TLDs (.com, .org, .io, .net, .dev, .app), replaces
+    dots and hyphens with underscores, and lowercases.
+    """
+    for tld in (".com", ".org", ".io", ".net", ".dev", ".app"):
+        if name.endswith(tld):
+            name = name[: -len(tld)]
+            break
+    return name.replace("-", "_").replace(".", "_").lower()
+
+
+@lru_cache(maxsize=1)
+def _read_project_name() -> str | None:
+    """Walk up from CWD looking for pyproject.toml and return [project].name."""
+    path = Path.cwd()
+    for parent in [path, *path.parents]:
+        toml_path = parent / "pyproject.toml"
+        if toml_path.is_file():
+            try:
+                with open(toml_path, "rb") as f:
+                    data = tomllib.load(f)
+                return data.get("project", {}).get("name")
+            except Exception:
+                return None
+    return None
+
+
+def _table_prefix(module_name: str) -> str:
+    """Derive a table prefix from the module where a model is defined.
+
+    For package modules (``myapp.models``), uses the top-level package
+    name. For standalone files with generic names (``main.py``,
+    ``app.py``, ``models.py``), falls back to the normalized project
+    name from ``pyproject.toml``.
+    """
+    top_module = module_name.split(".")[0]
+    if top_module not in _GENERIC_MODULES:
+        return top_module
+    project_name = _read_project_name()
+    if project_name:
+        return _normalize_project_name(project_name)
+    return top_module
+
+
+# Expose cache_clear on _table_prefix for tests that monkeypatch CWD
+_table_prefix.cache_clear = _read_project_name.cache_clear  # type: ignore[attr-defined]
+
 
 # ---------------------------------------------------------------------------
 # Type mapping: Python types -> PostgreSQL column types
@@ -237,7 +297,9 @@ class AirModel(BaseModel):
 
     @classmethod
     def _table_name(cls) -> str:
-        return re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", cls.__name__).lower()
+        prefix = _table_prefix(cls.__module__)
+        snake = re.sub(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])", "_", cls.__name__).lower()
+        return f"{prefix}_{snake}"
 
     @classmethod
     def _pk_field(cls) -> str | None:
