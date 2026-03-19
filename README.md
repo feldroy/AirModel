@@ -4,9 +4,9 @@
 
 Async ORM for Pydantic models and PostgreSQL, with a Django-inspired query API.
 
+* [GitHub](https://github.com/feldroy/AirModel/) | [PyPI](https://pypi.org/project/AirModel/) | [Documentation](https://feldroy.github.io/AirModel/)
 * Created by [Audrey M. Roy Greenfeld](https://audrey.feldroy.com/) | GitHub [@audreyfeldroy](https://github.com/audreyfeldroy) | PyPI [@audreyr](https://pypi.org/user/audreyr/)
 * MIT License
-* [GitHub](https://github.com/feldroy/AirModel/) | [PyPI](https://pypi.org/project/AirModel/) | [Documentation](https://feldroy.github.io/AirModel/)
 
 Define your models with standard Pydantic type annotations. AirModel turns them into PostgreSQL tables and gives you async `create`, `get`, `filter`, `all`, `count`, `save`, and `delete`, plus Django-style lookups like `price__gte=10` and `name__icontains="dragon"`.
 
