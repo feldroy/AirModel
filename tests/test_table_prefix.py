@@ -2,15 +2,12 @@
 
 AirModel derives a table prefix from the module where the model is defined:
 - Package module (myapp.models) → prefix is the top-level package name (myapp)
-- Standalone file with a meaningful name (feldroy.py) → prefix is the filename (feldroy)
+- Standalone file with a meaningful name (bakeshop.py) → prefix is the filename (bakeshop)
 - Standalone file with a generic name (main.py, app.py) → prefix is the
   normalized project name from pyproject.toml
 """
 
-import pytest
-
-from airmodel.main import _normalize_project_name, _table_prefix
-
+from airmodel.main import _normalize_project_name, _read_project_name, _table_prefix
 
 # ---------------------------------------------------------------------------
 # _normalize_project_name
@@ -19,7 +16,7 @@ from airmodel.main import _normalize_project_name, _table_prefix
 
 class TestNormalizeProjectName:
     def test_strips_dot_com(self) -> None:
-        assert _normalize_project_name("feldroy.com") == "feldroy"
+        assert _normalize_project_name("example-bakery.com") == "example_bakery"
 
     def test_strips_dot_org(self) -> None:
         assert _normalize_project_name("myproject.org") == "myproject"
@@ -40,7 +37,7 @@ class TestNormalizeProjectName:
         assert _normalize_project_name("My-Cool-App.io") == "my_cool_app"
 
     def test_plain_name_unchanged(self) -> None:
-        assert _normalize_project_name("feldroy") == "feldroy"
+        assert _normalize_project_name("bakeshop") == "bakeshop"
 
 
 # ---------------------------------------------------------------------------
@@ -56,42 +53,42 @@ class TestTablePrefix:
         assert _table_prefix("myapp.sub.models") == "myapp"
 
     def test_meaningful_standalone_file(self) -> None:
-        assert _table_prefix("feldroy") == "feldroy"
+        assert _table_prefix("bakeshop") == "bakeshop"
 
     def test_generic_main_falls_back_to_project(self, tmp_path, monkeypatch) -> None:
         """main.py should fall back to pyproject.toml project name."""
         toml = tmp_path / "pyproject.toml"
-        toml.write_text('[project]\nname = "feldroy.com"\n')
+        toml.write_text('[project]\nname = "example-bakery.com"\n')
         monkeypatch.chdir(tmp_path)
         # Clear the cache so it re-reads
-        _table_prefix.cache_clear()
-        assert _table_prefix("main") == "feldroy"
+        _read_project_name.cache_clear()
+        assert _table_prefix("main") == "example_bakery"
 
     def test_generic_app_falls_back_to_project(self, tmp_path, monkeypatch) -> None:
         toml = tmp_path / "pyproject.toml"
         toml.write_text('[project]\nname = "my-cool-project"\n')
         monkeypatch.chdir(tmp_path)
-        _table_prefix.cache_clear()
+        _read_project_name.cache_clear()
         assert _table_prefix("app") == "my_cool_project"
 
     def test_generic_models_falls_back_to_project(self, tmp_path, monkeypatch) -> None:
         toml = tmp_path / "pyproject.toml"
         toml.write_text('[project]\nname = "shopsite.io"\n')
         monkeypatch.chdir(tmp_path)
-        _table_prefix.cache_clear()
+        _read_project_name.cache_clear()
         assert _table_prefix("models") == "shopsite"
 
     def test_generic_dunder_main_falls_back(self, tmp_path, monkeypatch) -> None:
         toml = tmp_path / "pyproject.toml"
-        toml.write_text('[project]\nname = "feldroy.com"\n')
+        toml.write_text('[project]\nname = "example-bakery.com"\n')
         monkeypatch.chdir(tmp_path)
-        _table_prefix.cache_clear()
-        assert _table_prefix("__main__") == "feldroy"
+        _read_project_name.cache_clear()
+        assert _table_prefix("__main__") == "example_bakery"
 
     def test_no_pyproject_uses_generic_name(self, tmp_path, monkeypatch) -> None:
         """If no pyproject.toml exists, fall back to the generic module name."""
         monkeypatch.chdir(tmp_path)
-        _table_prefix.cache_clear()
+        _read_project_name.cache_clear()
         assert _table_prefix("main") == "main"
 
 

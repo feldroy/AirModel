@@ -100,10 +100,6 @@ def _table_prefix(module_name: str) -> str:
     return top_module
 
 
-# Expose cache_clear on _table_prefix for tests that monkeypatch CWD
-_table_prefix.cache_clear = _read_project_name.cache_clear  # type: ignore[attr-defined]
-
-
 # ---------------------------------------------------------------------------
 # Type mapping: Python types -> PostgreSQL column types
 # ---------------------------------------------------------------------------
