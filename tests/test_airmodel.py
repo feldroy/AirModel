@@ -1508,6 +1508,170 @@ class TestBulkOperations:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Auto-migration: _add_column_sql
+# ---------------------------------------------------------------------------
+
+
+class MigrationModel(AirModel):
+    """Model used for testing _add_column_sql and create_tables migration."""
+
+    id: int | None = AirField(default=None, primary_key=True)
+    name: str
+    score: float
+    active: bool
+    created: datetime
+    trace_id: UUID
+    nickname: str | None = None
+
+
+class TestAddColumnSQL:
+    """Pure SQL generation tests for _add_column_sql (no mocks needed)."""
+
+    def test_str_column(self) -> None:
+        sql = MigrationModel._add_column_sql("name")
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "name" TEXT'
+
+    def test_int_column(self) -> None:
+        # Use BokChoy which has an int field
+        sql = BokChoy._add_column_sql("bunch_size")
+        assert sql == 'ALTER TABLE "test_airmodel_bok_choy" ADD COLUMN "bunch_size" INTEGER'
+
+    def test_float_column(self) -> None:
+        sql = MigrationModel._add_column_sql("score")
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "score" DOUBLE PRECISION'
+
+    def test_bool_column(self) -> None:
+        sql = MigrationModel._add_column_sql("active")
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "active" BOOLEAN'
+
+    def test_datetime_column(self) -> None:
+        sql = MigrationModel._add_column_sql("created")
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "created" TIMESTAMP WITH TIME ZONE'
+
+    def test_uuid_column(self) -> None:
+        sql = MigrationModel._add_column_sql("trace_id")
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "trace_id" UUID'
+
+    def test_optional_field_no_not_null(self) -> None:
+        sql = MigrationModel._add_column_sql("nickname")
+        assert "NOT NULL" not in sql
+        assert sql == 'ALTER TABLE "test_airmodel_migration_model" ADD COLUMN "nickname" TEXT'
+
+    def test_required_field_also_no_not_null(self) -> None:
+        """Safety property: even required fields get no NOT NULL in ALTER,
+        because existing rows have no value for the new column."""
+        sql = MigrationModel._add_column_sql("name")
+        assert "NOT NULL" not in sql
+
+
+# ---------------------------------------------------------------------------
+# Auto-migration: create_tables with ALTER TABLE ADD COLUMN
+# ---------------------------------------------------------------------------
+
+
+class MigrationPool:
+    """Mock pool that captures all execute() calls and returns per-table
+    column sets from fetch()."""
+
+    def __init__(self, existing_columns: dict[str, set[str]]) -> None:
+        self.executed: list[str] = []
+        self._existing_columns = existing_columns
+
+    async def execute(self, sql: str, *args: object) -> None:
+        self.executed.append(sql)
+
+    async def fetch(self, sql: str, *args: object) -> list[dict[str, str]]:
+        """Return column names for the queried table."""
+        # args[0] is the table name passed as $1
+        table_name = args[0] if args else ""
+        columns = self._existing_columns.get(table_name, set())
+        return [{"column_name": c} for c in columns]
+
+
+class TestCreateTablesMigration:
+    """Mock pool tests for auto-migration in create_tables()."""
+
+    async def test_new_table_no_alter(self) -> None:
+        """When a table is brand new, no ALTER TABLE should be issued."""
+        pool = MigrationPool(existing_columns={})
+        db = AirDB()
+        db.connect(pool)
+        try:
+            await db.create_tables()
+            alter_stmts = [s for s in pool.executed if s.startswith("ALTER")]
+            assert alter_stmts == [], f"New tables should not get ALTER statements: {alter_stmts}"
+        finally:
+            db.disconnect()
+
+    async def test_existing_table_missing_column_gets_alter(self) -> None:
+        """When an existing table is missing a column, ALTER TABLE ADD COLUMN is issued."""
+        table_name = Cassava._table_name()
+        # Cassava has fields: id, variety. Simulate table with only id.
+        pool = MigrationPool(existing_columns={table_name: {"id"}})
+        db = AirDB()
+        db.connect(pool)
+        try:
+            await db.create_tables()
+            alter_stmts = [s for s in pool.executed if "ALTER" in s and table_name in s]
+            assert len(alter_stmts) == 1
+            assert '"variety"' in alter_stmts[0]
+            assert "ADD COLUMN" in alter_stmts[0]
+        finally:
+            db.disconnect()
+
+    async def test_alter_never_includes_not_null(self) -> None:
+        """ALTER TABLE ADD COLUMN should never include NOT NULL."""
+        table_name = StarFruit._table_name()
+        # StarFruit has: id, title(str NOT NULL), score(float NOT NULL),
+        # active(bool NOT NULL), created(datetime NOT NULL)
+        # Simulate table with only id — all other columns need adding
+        pool = MigrationPool(existing_columns={table_name: {"id"}})
+        db = AirDB()
+        db.connect(pool)
+        try:
+            await db.create_tables()
+            alter_stmts = [s for s in pool.executed if "ALTER" in s and table_name in s]
+            for stmt in alter_stmts:
+                assert "NOT NULL" not in stmt, f"ALTER should not have NOT NULL: {stmt}"
+        finally:
+            db.disconnect()
+
+    async def test_pk_field_not_added_via_alter(self) -> None:
+        """The primary key field should never be added via ALTER TABLE."""
+        table_name = Cassava._table_name()
+        # Simulate table with only variety (missing id, but id is PK)
+        pool = MigrationPool(existing_columns={table_name: {"variety"}})
+        db = AirDB()
+        db.connect(pool)
+        try:
+            await db.create_tables()
+            alter_stmts = [s for s in pool.executed if "ALTER" in s and table_name in s]
+            for stmt in alter_stmts:
+                assert '"id"' not in stmt, f"PK should not be added via ALTER: {stmt}"
+        finally:
+            db.disconnect()
+
+    async def test_removed_field_not_dropped(self) -> None:
+        """Columns in the database but not in the model should NOT be dropped."""
+        table_name = Cassava._table_name()
+        # Simulate table with an extra column not in the model
+        pool = MigrationPool(existing_columns={table_name: {"id", "variety", "old_column"}})
+        db = AirDB()
+        db.connect(pool)
+        try:
+            await db.create_tables()
+            drop_stmts = [s for s in pool.executed if "DROP" in s]
+            assert drop_stmts == [], f"Should never drop columns: {drop_stmts}"
+        finally:
+            db.disconnect()
+
+
+# ---------------------------------------------------------------------------
+# save(update_fields=...) — partial updates
+# ---------------------------------------------------------------------------
+
+
 class TestSaveUpdateFields:
     """save(update_fields=[...]) should UPDATE only the specified columns."""
 
