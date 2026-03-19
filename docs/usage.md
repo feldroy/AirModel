@@ -12,7 +12,7 @@ class UnicornSighting(AirModel):
     confirmed: bool = AirField(default=False)
 ```
 
-Table names derive from class names: `UnicornSighting` becomes `unicorn_sighting`.
+Table names include a prefix derived from the module where the model is defined, so models in different projects sharing one database won't collide. A `UnicornSighting` in `myapp/models.py` becomes `myapp_unicorn_sighting`. For standalone files with generic names (`main.py`, `app.py`, `models.py`), the prefix comes from the `[project].name` in `pyproject.toml`.
 
 ## Connect to PostgreSQL
 

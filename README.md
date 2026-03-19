@@ -83,7 +83,7 @@ This runs `CREATE TABLE IF NOT EXISTS` for every `AirModel` subclass. It creates
 
 ## Query API
 
-Every method is async. Table names are derived from class names (`UnicornSighting` becomes `unicorn_sighting`).
+Every method is async. Table names are derived from the module and class name, so models in different projects sharing one database won't collide. A `UnicornSighting` defined in `myapp/models.py` becomes `myapp_unicorn_sighting`. For standalone files with generic names like `main.py`, the prefix comes from `pyproject.toml`'s project name.
 
 ### CRUD
 
