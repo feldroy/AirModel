@@ -1584,7 +1584,7 @@ class MigrationPool:
     async def fetch(self, sql: str, *args: object) -> list[dict[str, str]]:
         """Return column names for the queried table."""
         # args[0] is the table name passed as $1
-        table_name = args[0] if args else ""
+        table_name = str(args[0]) if args else ""
         columns = self._existing_columns.get(table_name, set())
         return [{"column_name": c} for c in columns]
 
