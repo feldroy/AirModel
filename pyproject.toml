@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "AirModel"
-version = "0.4.1"
+version = "0.4.2"
 description = "Async ORM for Pydantic models and PostgreSQL, with a Django-inspired API"
 readme = "README.md"
 authors = [
