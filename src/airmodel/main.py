@@ -655,8 +655,7 @@ class AirModel(BaseModel):
 async def _get_existing_columns(pool: Any, table_name: str) -> set[str]:
     """Query ``information_schema.columns`` for a table's current column names."""
     rows = await pool.fetch(
-        "SELECT column_name FROM information_schema.columns "
-        "WHERE table_schema = 'public' AND table_name = $1",
+        "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1",
         table_name,
     )
     return {row["column_name"] for row in rows}
